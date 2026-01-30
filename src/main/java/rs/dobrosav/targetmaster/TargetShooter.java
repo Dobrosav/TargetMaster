@@ -275,16 +275,14 @@ public class TargetShooter extends Application {
         // Bullet
         Sphere bullet = new Sphere(0.5);
         bullet.setMaterial(new PhongMaterial(Color.BLACK));
-        Point3D cameraWorldPosition = new Point3D(cameraPivot.getTranslateX(), cameraPivot.getTranslateY(), cameraPivot.getTranslateZ());
-        double angleY = cameraRotateY.getAngle();
-        double angleX = cameraRotateX.getAngle();
-        double xDirection = Math.sin(Math.toRadians(angleY)) * Math.cos(Math.toRadians(angleX));
-        double yDirection = -Math.sin(Math.toRadians(angleX));
-        double zDirection = -Math.cos(Math.toRadians(angleY)) * Math.cos(Math.toRadians(angleX));
-        Point3D direction = new Point3D(-xDirection, -yDirection, -zDirection).normalize();
-        bullet.setTranslateX(cameraWorldPosition.getX());
-        bullet.setTranslateY(cameraWorldPosition.getY());
-        bullet.setTranslateZ(cameraWorldPosition.getZ());
+        
+        Point3D origin = camera.localToScene(0, 0, 0);
+        Point3D target = camera.localToScene(0, 0, 1);
+        Point3D direction = target.subtract(origin).normalize();
+        
+        bullet.setTranslateX(origin.getX());
+        bullet.setTranslateY(origin.getY());
+        bullet.setTranslateZ(origin.getZ());
         bullet.setUserData(direction);
         bullets.add(bullet);
         root3D.getChildren().add(bullet);
@@ -361,20 +359,30 @@ public class TargetShooter extends Application {
 
         for (Node bullet : new ArrayList<>(bullets)) {
             Point3D direction = (Point3D) bullet.getUserData();
+            Point3D prevPos = new Point3D(bullet.getTranslateX(), bullet.getTranslateY(), bullet.getTranslateZ());
+
             bullet.setTranslateX(bullet.getTranslateX() + direction.getX() * 20);
             bullet.setTranslateY(bullet.getTranslateY() + direction.getY() * 20);
             bullet.setTranslateZ(bullet.getTranslateZ() + direction.getZ() * 20);
 
-            Point3D bulletPosition = new Point3D(bullet.getTranslateX(), bullet.getTranslateY(), bullet.getTranslateZ());
-            Point3D targetPosition = new Point3D(target.getTranslateX(), target.getTranslateY(), target.getTranslateZ());
-            double distance = bulletPosition.distance(targetPosition);
+            Point3D currPos = new Point3D(bullet.getTranslateX(), bullet.getTranslateY(), bullet.getTranslateZ());
+            Point3D targetPos = new Point3D(target.getTranslateX(), target.getTranslateY(), target.getTranslateZ());
+
+            Point3D V = currPos.subtract(prevPos);
+            Point3D L = targetPos.subtract(prevPos);
+
+            double t = L.dotProduct(V) / V.dotProduct(V);
+            t = Math.max(0, Math.min(1, t));
+
+            Point3D closestPoint = prevPos.add(V.multiply(t));
+            double distance = closestPoint.distance(targetPos);
 
             if (distance < 15) { // 15 is the radius of the largest target cylinder
                 System.out.println("Target Hit!");
 //                if (hitSound != null) {
 //                    hitSound.play();
 //                }
-                playHitEffect(new Point3D(bullet.getTranslateX(), bullet.getTranslateY(), bullet.getTranslateZ()));
+                playHitEffect(closestPoint);
                 score++;
                 scoreText.setText("Score: " + score);
                 root3D.getChildren().remove(target);
