@@ -54,12 +54,21 @@ java -jar target/TargetMaster-1.0-SNAPSHOT.jar
 
 ## Technologies Used
 
-*   **Java 21**
-*   **JavaFX 21** (Controls, Graphics, FXML)
-*   **mp3spi** (Java Sound MP3 decoding)
-*   **Apache Maven**
-*   **ControlsFX** & **Ikonli** (Dependencies)
+<div align="center">
+
+![Java](https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/java/java-original.svg)
+![Maven](https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/maven/maven-original.svg)
+
+</div>
+
+*   **Java 21** - Programming language
+*   **JavaFX 21** - UI framework for graphics, controls, and FXML
+*   **Apache Maven** - Build automation and dependency management
+*   **mp3spi** - Java Sound MP3 decoding library
+*   **ControlsFX** - Extended JavaFX controls and UI components
+*   **Ikonli** - Icon library integration for JavaFX
 
 ## License
 
 This project is open-source.
+
