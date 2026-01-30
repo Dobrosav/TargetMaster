@@ -11,18 +11,18 @@ import javafx.scene.image.WritableImage;
 import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.PhongMaterial;
-import javafx.scene.shape.Box;
-import javafx.scene.shape.Cylinder;
-import javafx.scene.shape.CullFace;
-import javafx.scene.shape.Line;
-import javafx.scene.shape.Sphere;
+import javafx.scene.shape.*;
 // import javafx.scene.media.AudioClip;
+import javafx.scene.shape.Line;
 import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 import javafx.scene.transform.Rotate;
 import javafx.stage.Stage;
 import javafx.util.Duration;
 
+import javax.sound.sampled.*;
+import java.io.IOException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -52,8 +52,10 @@ public class TargetShooter extends Application {
     private double targetBoundsX = 200;
     private double targetInitialX = 0;
 
-//    private AudioClip fireSound;
-//    private AudioClip hitSound;
+    private Clip fireClip;
+    private Pane simpleCrosshair;
+    private Group scopeOverlay;
+    private boolean isScoped = false;
 
     @Override
     public void start(Stage stage) {
@@ -109,11 +111,14 @@ public class TargetShooter extends Application {
         scoreText.setX(20);
         scoreText.setY(40);
 
-        Pane crosshairPane = createCustomCrosshair();
-        Pane mainPane = new Pane(subScene, missedText, scoreText, crosshairPane);
+        simpleCrosshair = createCustomCrosshair();
+        scopeOverlay = createScopeOverlay();
+        scopeOverlay.setVisible(false);
+
+        Pane mainPane = new Pane(subScene, missedText, scoreText, simpleCrosshair, scopeOverlay);
 
         Scene scene = new Scene(mainPane, WIDTH, HEIGHT);
-        scene.setCursor(Cursor.NONE); // Hide the default cursor
+        scene.setCursor(Cursor.NONE);
 
         setupMouseControl(scene);
 
@@ -129,14 +134,32 @@ public class TargetShooter extends Application {
         };
         timer.start();
 
-//        // Load sounds
-//        try {
-//            fireSound = new AudioClip(getClass().getResource("/sounds/gunshot.wav").toExternalForm());
+        // Load sounds
+        try {
+            URL url = getClass().getResource("/sound/shot-and-reload-6158.mp3");
+            if (url != null) {
+                AudioInputStream audioIn = AudioSystem.getAudioInputStream(url);
+                AudioFormat baseFormat = audioIn.getFormat();
+                AudioFormat decodedFormat = new AudioFormat(
+                        AudioFormat.Encoding.PCM_SIGNED,
+                        baseFormat.getSampleRate(),
+                        16,
+                        baseFormat.getChannels(),
+                        baseFormat.getChannels() * 2,
+                        baseFormat.getSampleRate(),
+                        false
+                );
+                AudioInputStream decodedAudioIn = AudioSystem.getAudioInputStream(decodedFormat, audioIn);
+                fireClip = AudioSystem.getClip();
+                fireClip.open(decodedAudioIn);
+            } else {
+                System.err.println("Sound file not found!");
+            }
 //            hitSound = new AudioClip(getClass().getResource("/sounds/hit.wav").toExternalForm());
-//        } catch (Exception e) {
-//            System.err.println("Error loading sounds: " + e.getMessage());
-//            e.printStackTrace();
-//        }
+        } catch (Exception e) {
+            System.err.println("Error loading sounds: " + e.getMessage());
+            e.printStackTrace();
+        }
     }
 
     private Image createFloorTexture() {
@@ -204,41 +227,178 @@ public class TargetShooter extends Application {
         scene.setOnMouseClicked(event -> {
             if (event.getButton() == MouseButton.PRIMARY) {
                 fire();
+            } else if (event.getButton() == MouseButton.SECONDARY) {
+                toggleScope();
             }
         });
     }
 
     private Group createSniperModel() {
         Group sniper = new Group();
-        PhongMaterial bodyMaterial = new PhongMaterial(Color.web("#333"));
-        PhongMaterial metalMaterial = new PhongMaterial(Color.web("#888"));
-
-        Box body = new Box(2, 3, 18);
-        body.setMaterial(bodyMaterial);
-        body.setTranslateZ(5);
-
-        Cylinder barrel = new Cylinder(0.5, 12);
-        barrel.setMaterial(metalMaterial);
+        PhongMaterial blackMetal = new PhongMaterial(Color.web("#1a1a1a"));
+        PhongMaterial gunMetal = new PhongMaterial(Color.web("#555555"));
+        PhongMaterial woodOrPolymer = new PhongMaterial(Color.web("#2e2620")); // Dark textured look
+        PhongMaterial silverMetal = new PhongMaterial(Color.SILVER);
+        Cylinder barrel = new Cylinder(0.25, 35);
+        barrel.setMaterial(gunMetal);
         barrel.setRotationAxis(Rotate.X_AXIS);
         barrel.setRotate(90);
-        barrel.setTranslateZ(-7);
+        barrel.setTranslateZ(-15);
+        Cylinder muzzleBrake = new Cylinder(0.4, 3);
+        muzzleBrake.setMaterial(blackMetal);
+        muzzleBrake.setRotationAxis(Rotate.X_AXIS);
+        muzzleBrake.setRotate(90);
+        muzzleBrake.setTranslateZ(-33.5); // End of barrel
+        Box receiver = new Box(1.6, 2.2, 10);
+        receiver.setMaterial(blackMetal);
+        receiver.setTranslateZ(2);
+        Cylinder bolt = new Cylinder(0.15, 2.5);
+        bolt.setMaterial(silverMetal);
+        bolt.setRotationAxis(Rotate.Z_AXIS);
+        bolt.setRotate(70);
+        bolt.setTranslateX(1.2);
+        bolt.setTranslateY(-0.5);
+        bolt.setTranslateZ(0);
 
-        Box stock = new Box(2, 4, 6);
-        stock.setMaterial(bodyMaterial);
-        stock.setTranslateZ(17);
-        stock.setTranslateY(1);
-
-        Cylinder scopeTube = new Cylinder(0.8, 7);
-        scopeTube.setMaterial(new PhongMaterial(Color.BLACK));
+        Sphere boltKnob = new Sphere(0.35);
+        boltKnob.setMaterial(blackMetal);
+        boltKnob.setTranslateX(2.2);
+        boltKnob.setTranslateY(0.2);
+        boltKnob.setTranslateZ(0);
+        Box stockBody = new Box(1.3, 3.0, 14);
+        stockBody.setMaterial(woodOrPolymer);
+        stockBody.setTranslateZ(14);
+        stockBody.setTranslateY(1.0);
+        Box grip = new Box(1.2, 4, 2);
+        grip.setMaterial(woodOrPolymer);
+        grip.setRotationAxis(Rotate.X_AXIS);
+        grip.setRotate(15);
+        grip.setTranslateZ(8);
+        grip.setTranslateY(3.5);
+        Box buttPlate = new Box(1.5, 3.2, 1);
+        buttPlate.setMaterial(new PhongMaterial(Color.BLACK));
+        buttPlate.setTranslateZ(21.5);
+        buttPlate.setTranslateY(1.0);
+        Box mount1 = new Box(0.5, 1, 0.5);
+        mount1.setMaterial(blackMetal);
+        mount1.setTranslateY(-1.6);
+        mount1.setTranslateZ(0);
+        Box mount2 = new Box(0.5, 1, 0.5);
+        mount2.setMaterial(blackMetal);
+        mount2.setTranslateY(-1.6);
+        mount2.setTranslateZ(4);
+        Cylinder scopeTube = new Cylinder(0.4, 12);
+        scopeTube.setMaterial(blackMetal);
         scopeTube.setRotationAxis(Rotate.X_AXIS);
         scopeTube.setRotate(90);
         scopeTube.setTranslateY(-2.5);
-        scopeTube.setTranslateZ(5);
-        
-        sniper.getChildren().addAll(body, barrel, stock, scopeTube);
-        sniper.setTranslateZ(10);
-        sniper.setTranslateY(5);
+        scopeTube.setTranslateZ(2);
+
+        Cylinder scopeFront = new Cylinder(0.65, 2.5);
+        scopeFront.setMaterial(blackMetal);
+        scopeFront.setRotationAxis(Rotate.X_AXIS);
+        scopeFront.setRotate(90);
+        scopeFront.setTranslateY(-2.5);
+        scopeFront.setTranslateZ(-4);
+
+        Cylinder scopeBack = new Cylinder(0.55, 2.5);
+        scopeBack.setMaterial(blackMetal);
+        scopeBack.setRotationAxis(Rotate.X_AXIS);
+        scopeBack.setRotate(90);
+        scopeBack.setTranslateY(-2.5);
+        scopeBack.setTranslateZ(8);
+
+        Cylinder bipodL = new Cylinder(0.15, 8);
+        bipodL.setMaterial(blackMetal);
+        bipodL.setTranslateZ(-12);
+        bipodL.setTranslateX(-1.5);
+        bipodL.setTranslateY(4);
+        bipodL.setRotationAxis(Rotate.Z_AXIS);
+        bipodL.setRotate(25);
+
+        Cylinder bipodR = new Cylinder(0.15, 8);
+        bipodR.setMaterial(blackMetal);
+        bipodR.setTranslateZ(-12);
+        bipodR.setTranslateX(1.5);
+        bipodR.setTranslateY(4);
+        bipodR.setRotationAxis(Rotate.Z_AXIS);
+        bipodR.setRotate(-25);
+
+        // Assemble
+        sniper.getChildren().addAll(
+                barrel, muzzleBrake,
+                receiver,
+                bolt, boltKnob,
+                stockBody, grip, buttPlate,
+                mount1, mount2, scopeTube, scopeFront, scopeBack,
+                bipodL, bipodR
+        );
+
+        sniper.setTranslateZ(12);
+        sniper.setTranslateY(6);
         return sniper;
+    }
+
+    private void toggleScope() {
+        isScoped = !isScoped;
+        if (isScoped) {
+            simpleCrosshair.setVisible(false);
+            scopeOverlay.setVisible(true);
+            sniperModel.setVisible(false);
+            camera.setFieldOfView(10); // Zoom in
+        } else {
+            simpleCrosshair.setVisible(true);
+            scopeOverlay.setVisible(false);
+            sniperModel.setVisible(true);
+            camera.setFieldOfView(45); // Default FOV
+        }
+    }
+
+    private Group createScopeOverlay() {
+        Group group = new Group();
+        double cx = WIDTH / 2;
+        double cy = HEIGHT / 2;
+        double r = HEIGHT / 2;
+
+        Rectangle screenRect = new Rectangle(0, 0, WIDTH, HEIGHT);
+        Circle scopeHole = new Circle(cx, cy, r);
+
+        Shape mask = Shape.subtract(screenRect, scopeHole);
+        mask.setFill(Color.BLACK);
+
+        Line hLine = new Line(0, cy, WIDTH, cy);
+        hLine.setStroke(Color.BLACK);
+        hLine.setStrokeWidth(1);
+
+
+        Line vLine = new Line(cx, 0, cx, HEIGHT);
+        vLine.setStroke(Color.BLACK);
+        vLine.setStrokeWidth(1);
+
+        double gap = 50;
+
+        Line thickL = new Line(0, cy, cx - gap, cy);
+        thickL.setStroke(Color.BLACK);
+        thickL.setStrokeWidth(4);
+
+
+        Line thickR = new Line(cx + gap, cy, WIDTH, cy);
+        thickR.setStroke(Color.BLACK);
+        thickR.setStrokeWidth(4);
+
+        Line thickT = new Line(cx, 0, cx, cy - gap);
+        thickT.setStroke(Color.BLACK);
+        thickT.setStrokeWidth(4);
+
+        Line thickB = new Line(cx, cy + gap, cx, HEIGHT);
+        thickB.setStroke(Color.BLACK);
+        thickB.setStrokeWidth(4);
+
+        Circle redDot = new Circle(cx, cy, 1.5, Color.RED);
+
+        group.getChildren().addAll(mask, hLine, vLine, thickL, thickR, thickT, thickB, redDot);
+        group.setMouseTransparent(true);
+        return group;
     }
 
     private Pane createCustomCrosshair() {
@@ -276,33 +436,41 @@ public class TargetShooter extends Application {
         root3D.getChildren().add(flashGroup);
 
         ScaleTransition st = new ScaleTransition(Duration.millis(50), flashGroup);
-        st.setFromX(0.1); st.setFromY(0.1); st.setFromZ(0.1);
-        st.setToX(1.0); st.setToY(1.0); st.setToZ(1.0);
+        st.setFromX(0.1);
+        st.setFromY(0.1);
+        st.setFromZ(0.1);
+        st.setToX(1.0);
+        st.setToY(1.0);
+        st.setToZ(1.0);
 
         FadeTransition ft = new FadeTransition(Duration.millis(100), flashGroup);
         ft.setFromValue(1.0);
         ft.setToValue(0.0);
-        
+
         ParallelTransition pt = new ParallelTransition(st, ft);
         pt.setOnFinished(e -> root3D.getChildren().remove(flashGroup));
         pt.play();
     }
 
     private void fire() {
-//        if (fireSound != null) {
-//            fireSound.play();
-//        }
+        if (fireClip != null) {
+            if (fireClip.isRunning()) {
+                fireClip.stop(); // Stop if already playing
+            }
+            fireClip.setFramePosition(0); // Rewind
+            fireClip.start(); // Play
+        }
         Group cameraPivot = (Group) camera.getParent();
         createMuzzleFlash();
 
         // Bullet
         Sphere bullet = new Sphere(0.5);
         bullet.setMaterial(new PhongMaterial(Color.BLACK));
-        
+
         Point3D origin = camera.localToScene(0, 0, 0);
         Point3D target = camera.localToScene(0, 0, 1);
         Point3D direction = target.subtract(origin).normalize();
-        
+
         bullet.setTranslateX(origin.getX());
         bullet.setTranslateY(origin.getY());
         bullet.setTranslateZ(origin.getZ());
@@ -329,9 +497,9 @@ public class TargetShooter extends Application {
             particle.setTranslateZ(position.getZ());
 
             Point3D velocity = new Point3D(
-                (Math.random() - 0.5) * 5,
-                (Math.random() - 0.5) * 5,
-                (Math.random() - 0.5) * 5
+                    (Math.random() - 0.5) * 5,
+                    (Math.random() - 0.5) * 5,
+                    (Math.random() - 0.5) * 5
             );
             particle.setUserData(velocity);
             newParticles.add(particle);
@@ -373,13 +541,6 @@ public class TargetShooter extends Application {
     }
 
     private void update() {
-//        // Move the target
-//        double newX = target.getTranslateX() + targetDirection * targetSpeed;
-//        if (Math.abs(newX - targetInitialX) > targetBoundsX) {
-//            targetDirection *= -1;
-//        }
-//        target.setTranslateX(newX);
-
         for (Node bullet : new ArrayList<>(bullets)) {
             Point3D direction = (Point3D) bullet.getUserData();
             Point3D prevPos = new Point3D(bullet.getTranslateX(), bullet.getTranslateY(), bullet.getTranslateZ());
@@ -402,10 +563,6 @@ public class TargetShooter extends Application {
 
             if (distance < 15) { // 15 is the radius of the largest target cylinder
                 System.out.println("Target Hit!");
-//                if (hitSound != null) {
-//                    hitSound.play();
-//                }
-                playHitEffect(closestPoint);
                 score++;
                 scoreText.setText("Score: " + score);
                 root3D.getChildren().remove(target);
