@@ -1,7 +1,6 @@
 package rs.dobrosav.targetmaster;
 
-import javafx.animation.AnimationTimer;
-import javafx.animation.PauseTransition;
+import javafx.animation.*;
 import javafx.application.Application;
 import javafx.geometry.Point3D;
 import javafx.scene.*;
@@ -255,22 +254,46 @@ public class TargetShooter extends Application {
         return pane;
     }
 
+    private void createMuzzleFlash() {
+        Group cameraPivot = (Group) camera.getParent();
+        Point3D flashPosition = cameraPivot.localToScene(new Point3D(0, 2.5, 25));
+
+        Group flashGroup = new Group();
+        flashGroup.setTranslateX(flashPosition.getX());
+        flashGroup.setTranslateY(flashPosition.getY());
+        flashGroup.setTranslateZ(flashPosition.getZ());
+
+        Sphere core = new Sphere(1.5);
+        core.setMaterial(new PhongMaterial(Color.LIGHTYELLOW));
+
+        Sphere outer = new Sphere(4.0);
+        outer.setMaterial(new PhongMaterial(Color.ORANGERED));
+
+        PointLight light = new PointLight(Color.ORANGE);
+        light.setMaxRange(150);
+
+        flashGroup.getChildren().addAll(outer, core, light);
+        root3D.getChildren().add(flashGroup);
+
+        ScaleTransition st = new ScaleTransition(Duration.millis(50), flashGroup);
+        st.setFromX(0.1); st.setFromY(0.1); st.setFromZ(0.1);
+        st.setToX(1.0); st.setToY(1.0); st.setToZ(1.0);
+
+        FadeTransition ft = new FadeTransition(Duration.millis(100), flashGroup);
+        ft.setFromValue(1.0);
+        ft.setToValue(0.0);
+        
+        ParallelTransition pt = new ParallelTransition(st, ft);
+        pt.setOnFinished(e -> root3D.getChildren().remove(flashGroup));
+        pt.play();
+    }
+
     private void fire() {
 //        if (fireSound != null) {
 //            fireSound.play();
 //        }
-        // Muzzle Flash
-        Sphere flash = new Sphere(1.2);
-        flash.setMaterial(new PhongMaterial(Color.ORANGE));
         Group cameraPivot = (Group) camera.getParent();
-        Point3D flashPosition = cameraPivot.localToScene(new Point3D(0, 0, -14));
-        flash.setTranslateX(flashPosition.getX());
-        flash.setTranslateY(flashPosition.getY());
-        flash.setTranslateZ(flashPosition.getZ());
-        root3D.getChildren().add(flash);
-        PauseTransition flashVanish = new PauseTransition(Duration.millis(50));
-        flashVanish.setOnFinished(e -> root3D.getChildren().remove(flash));
-        flashVanish.play();
+        createMuzzleFlash();
 
         // Bullet
         Sphere bullet = new Sphere(0.5);
