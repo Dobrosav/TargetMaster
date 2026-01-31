@@ -54,7 +54,6 @@ public class TargetShooter extends Application {
 
      private Clip fireClip;
      private Pane simpleCrosshair;
-     private Group basicScopeOverlay;
      private Group detailedScopeOverlay;
      private boolean isScoped = false;
      private double breathingOffset = 0;
@@ -118,12 +117,10 @@ public class TargetShooter extends Application {
         scoreText.setY(40);
 
          simpleCrosshair = createCustomCrosshair();
-         basicScopeOverlay = createBasicScopeOverlay();
          detailedScopeOverlay = createDetailedScopeOverlay();
-         basicScopeOverlay.setVisible(true); // Uvijek vidljivo
          detailedScopeOverlay.setVisible(false); // Vidljivo samo pri zoom-u
 
-         Pane mainPane = new Pane(subScene, missedText, scoreText, simpleCrosshair, basicScopeOverlay, detailedScopeOverlay);
+         Pane mainPane = new Pane(subScene, missedText, scoreText, simpleCrosshair, detailedScopeOverlay);
 
         Scene scene = new Scene(mainPane, WIDTH, HEIGHT);
         scene.setCursor(Cursor.NONE);
@@ -407,81 +404,6 @@ public class TargetShooter extends Application {
          return group;
      }
 
-     private Group createBasicScopeOverlay() {
-         Group group = new Group();
-         double cx = WIDTH / 2;
-         double cy = HEIGHT / 2;
-         double r = Math.min(WIDTH, HEIGHT) / 2.5; // Manji krug za osnovnu sliku
-
-         // Crna maska oko scope-a
-         Rectangle screenRect = new Rectangle(0, 0, WIDTH, HEIGHT);
-         Circle scopeHole = new Circle(cx, cy, r);
-         Shape mask = Shape.subtract(screenRect, scopeHole);
-         mask.setFill(Color.BLACK);
-         mask.setOpacity(0.7); // Manje neprozirno
-
-         // Vanjski krug (scope cijev)
-         Circle scopeCircle = new Circle(cx, cy, r);
-         scopeCircle.setFill(null);
-         scopeCircle.setStroke(Color.web("#4a4a4a"));
-         scopeCircle.setStrokeWidth(3);
-
-         // Unutrašnji krug
-         Circle innerCircle = new Circle(cx, cy, r - 10);
-         innerCircle.setFill(null);
-         innerCircle.setStroke(Color.web("#666666"));
-         innerCircle.setStrokeWidth(1);
-
-         // Horizontalna linija
-         Line hLine = new Line(cx - r + 15, cy, cx + r - 15, cy);
-         hLine.setStroke(Color.web("#999999"));
-         hLine.setStrokeWidth(1);
-
-         // Vertikalna linija
-         Line vLine = new Line(cx, cy - r + 15, cx, cy + r - 15);
-         vLine.setStroke(Color.web("#999999"));
-         vLine.setStrokeWidth(1);
-
-         // Deblје linije sa stranama (kao reticle)
-         double gap = 40;
-         
-         Line thickL = new Line(cx - r + 15, cy, cx - gap, cy);
-         thickL.setStroke(Color.web("#888888"));
-         thickL.setStrokeWidth(2);
-
-         Line thickR = new Line(cx + gap, cy, cx + r - 15, cy);
-         thickR.setStroke(Color.web("#888888"));
-         thickR.setStrokeWidth(2);
-
-         Line thickT = new Line(cx, cy - r + 15, cx, cy - gap);
-         thickT.setStroke(Color.web("#888888"));
-         thickT.setStrokeWidth(2);
-
-         Line thickB = new Line(cx, cy + gap, cx, cy + r - 15);
-         thickB.setStroke(Color.web("#888888"));
-         thickB.setStrokeWidth(2);
-
-         // Mala crna tačka u centru
-         Circle centerDot = new Circle(cx, cy, 2);
-         centerDot.setFill(Color.web("#333333"));
-
-         // Minimalni markeri za daljinu (100m, 200m)
-         double markerRadius = r - 30;
-         
-         // Marker za 100m (desno)
-         Circle marker100 = new Circle(cx + markerRadius - 20, cy, 1.5);
-         marker100.setFill(Color.web("#555555"));
-         
-         // Marker za 200m (desno)
-         Circle marker200 = new Circle(cx + markerRadius - 40, cy, 1.5);
-         marker200.setFill(Color.web("#555555"));
-
-         group.getChildren().addAll(mask, scopeCircle, innerCircle, hLine, vLine, 
-                                      thickL, thickR, thickT, thickB, centerDot, 
-                                      marker100, marker200);
-         group.setMouseTransparent(true);
-         return group;
-     }
 
      private Group createDetailedScopeOverlay() {
          Group group = new Group();
