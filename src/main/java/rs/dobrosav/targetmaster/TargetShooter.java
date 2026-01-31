@@ -61,6 +61,7 @@ public class TargetShooter extends Application {
      private boolean breathingIn = true;
      private double scopeRecoilX = 0;
      private double scopeRecoilY = 0;
+     private Text ammoCountText;
 
     @Override
     public void start(Stage stage) {
@@ -593,9 +594,15 @@ public class TargetShooter extends Application {
          readyText.setFill(Color.web("#44dd44"));
          readyText.setOpacity(0.7);
 
+         // Ammo counter (desno, dolje)
+         ammoCountText = new Text(cx + r - 60, cy + r - 20, "20 / 5");
+         ammoCountText.setFont(new Font("Arial", 11));
+         ammoCountText.setFill(Color.web("#777777"));
+         ammoCountText.setOpacity(0.6);
+
          group.getChildren().addAll(mask, scopeCircle, innerCircle, gridLines, 
                                       hLine, vLine, thickL, thickR, thickT, thickB, 
-                                      centerDot, breathingText, readyText);
+                                      centerDot, breathingText, readyText, ammoCountText);
          group.setMouseTransparent(true);
          return group;
      }
