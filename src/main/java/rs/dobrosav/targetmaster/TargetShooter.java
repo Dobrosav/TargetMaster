@@ -600,9 +600,15 @@ public class TargetShooter extends Application {
          ammoCountText.setFill(Color.web("#777777"));
          ammoCountText.setOpacity(0.6);
 
+         // Zoom level indikator (lijevo, dolje)
+         Text zoomText = new Text(cx - r + 15, cy + r - 20, "8x ZOOM");
+         zoomText.setFont(new Font("Arial", 10));
+         zoomText.setFill(Color.web("#555555"));
+         zoomText.setOpacity(0.5);
+
          group.getChildren().addAll(mask, scopeCircle, innerCircle, gridLines, 
                                       hLine, vLine, thickL, thickR, thickT, thickB, 
-                                      centerDot, breathingText, readyText, ammoCountText);
+                                      centerDot, breathingText, readyText, ammoCountText, zoomText);
          group.setMouseTransparent(true);
          return group;
      }
