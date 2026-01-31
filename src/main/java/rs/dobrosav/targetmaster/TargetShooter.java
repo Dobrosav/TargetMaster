@@ -52,10 +52,13 @@ public class TargetShooter extends Application {
     private double targetBoundsX = 200;
     private double targetInitialX = 0;
 
-    private Clip fireClip;
-    private Pane simpleCrosshair;
-    private Group scopeOverlay;
-    private boolean isScoped = false;
+     private Clip fireClip;
+     private Pane simpleCrosshair;
+     private Group basicScopeOverlay;
+     private Group detailedScopeOverlay;
+     private boolean isScoped = false;
+     private double breathingOffset = 0;
+     private boolean breathingIn = true;
 
     @Override
     public void start(Stage stage) {
@@ -111,11 +114,13 @@ public class TargetShooter extends Application {
         scoreText.setX(20);
         scoreText.setY(40);
 
-        simpleCrosshair = createCustomCrosshair();
-        scopeOverlay = createScopeOverlay();
-        scopeOverlay.setVisible(false);
+         simpleCrosshair = createCustomCrosshair();
+         basicScopeOverlay = createBasicScopeOverlay();
+         detailedScopeOverlay = createDetailedScopeOverlay();
+         basicScopeOverlay.setVisible(true); // Uvijek vidljivo
+         detailedScopeOverlay.setVisible(false); // Vidljivo samo pri zoom-u
 
-        Pane mainPane = new Pane(subScene, missedText, scoreText, simpleCrosshair, scopeOverlay);
+         Pane mainPane = new Pane(subScene, missedText, scoreText, simpleCrosshair, basicScopeOverlay, detailedScopeOverlay);
 
         Scene scene = new Scene(mainPane, WIDTH, HEIGHT);
         scene.setCursor(Cursor.NONE);
@@ -339,67 +344,301 @@ public class TargetShooter extends Application {
         return sniper;
     }
 
-    private void toggleScope() {
-        isScoped = !isScoped;
-        if (isScoped) {
-            simpleCrosshair.setVisible(false);
-            scopeOverlay.setVisible(true);
-            sniperModel.setVisible(false);
-            camera.setFieldOfView(10); // Zoom in
-        } else {
-            simpleCrosshair.setVisible(true);
-            scopeOverlay.setVisible(false);
-            sniperModel.setVisible(true);
-            camera.setFieldOfView(45); // Default FOV
-        }
-    }
+     private void toggleScope() {
+         isScoped = !isScoped;
+         if (isScoped) {
+             detailedScopeOverlay.setVisible(true);
+             sniperModel.setVisible(false);
+             camera.setFieldOfView(8); // Jaće zoom (5-8 stupnjeva)
+         } else {
+             detailedScopeOverlay.setVisible(false);
+             sniperModel.setVisible(true);
+             camera.setFieldOfView(45); // Default FOV
+         }
+     }
 
-    private Group createScopeOverlay() {
-        Group group = new Group();
-        double cx = WIDTH / 2;
-        double cy = HEIGHT / 2;
-        double r = HEIGHT / 2;
+     private Group createScopeOverlay() {
+         Group group = new Group();
+         double cx = WIDTH / 2;
+         double cy = HEIGHT / 2;
+         double r = HEIGHT / 2;
 
-        Rectangle screenRect = new Rectangle(0, 0, WIDTH, HEIGHT);
-        Circle scopeHole = new Circle(cx, cy, r);
+         Rectangle screenRect = new Rectangle(0, 0, WIDTH, HEIGHT);
+         Circle scopeHole = new Circle(cx, cy, r);
 
-        Shape mask = Shape.subtract(screenRect, scopeHole);
-        mask.setFill(Color.BLACK);
+         Shape mask = Shape.subtract(screenRect, scopeHole);
+         mask.setFill(Color.BLACK);
 
-        Line hLine = new Line(0, cy, WIDTH, cy);
-        hLine.setStroke(Color.BLACK);
-        hLine.setStrokeWidth(1);
+         Line hLine = new Line(0, cy, WIDTH, cy);
+         hLine.setStroke(Color.BLACK);
+         hLine.setStrokeWidth(1);
 
 
-        Line vLine = new Line(cx, 0, cx, HEIGHT);
-        vLine.setStroke(Color.BLACK);
-        vLine.setStrokeWidth(1);
+         Line vLine = new Line(cx, 0, cx, HEIGHT);
+         vLine.setStroke(Color.BLACK);
+         vLine.setStrokeWidth(1);
 
-        double gap = 50;
+         double gap = 50;
 
-        Line thickL = new Line(0, cy, cx - gap, cy);
-        thickL.setStroke(Color.BLACK);
-        thickL.setStrokeWidth(4);
+         Line thickL = new Line(0, cy, cx - gap, cy);
+         thickL.setStroke(Color.BLACK);
+         thickL.setStrokeWidth(4);
 
 
-        Line thickR = new Line(cx + gap, cy, WIDTH, cy);
-        thickR.setStroke(Color.BLACK);
-        thickR.setStrokeWidth(4);
+         Line thickR = new Line(cx + gap, cy, WIDTH, cy);
+         thickR.setStroke(Color.BLACK);
+         thickR.setStrokeWidth(4);
 
-        Line thickT = new Line(cx, 0, cx, cy - gap);
-        thickT.setStroke(Color.BLACK);
-        thickT.setStrokeWidth(4);
+         Line thickT = new Line(cx, 0, cx, cy - gap);
+         thickT.setStroke(Color.BLACK);
+         thickT.setStrokeWidth(4);
 
-        Line thickB = new Line(cx, cy + gap, cx, HEIGHT);
-        thickB.setStroke(Color.BLACK);
-        thickB.setStrokeWidth(4);
+         Line thickB = new Line(cx, cy + gap, cx, HEIGHT);
+         thickB.setStroke(Color.BLACK);
+         thickB.setStrokeWidth(4);
 
-        Circle redDot = new Circle(cx, cy, 1.5, Color.RED);
+         Circle redDot = new Circle(cx, cy, 1.5, Color.RED);
 
-        group.getChildren().addAll(mask, hLine, vLine, thickL, thickR, thickT, thickB, redDot);
-        group.setMouseTransparent(true);
-        return group;
-    }
+         group.getChildren().addAll(mask, hLine, vLine, thickL, thickR, thickT, thickB, redDot);
+         group.setMouseTransparent(true);
+         return group;
+     }
+
+     private Group createBasicScopeOverlay() {
+         Group group = new Group();
+         double cx = WIDTH / 2;
+         double cy = HEIGHT / 2;
+         double r = Math.min(WIDTH, HEIGHT) / 2.5; // Manji krug za osnovnu sliku
+
+         // Crna maska oko scope-a
+         Rectangle screenRect = new Rectangle(0, 0, WIDTH, HEIGHT);
+         Circle scopeHole = new Circle(cx, cy, r);
+         Shape mask = Shape.subtract(screenRect, scopeHole);
+         mask.setFill(Color.BLACK);
+         mask.setOpacity(0.7); // Manje neprozirno
+
+         // Vanjski krug (scope cijev)
+         Circle scopeCircle = new Circle(cx, cy, r);
+         scopeCircle.setFill(null);
+         scopeCircle.setStroke(Color.web("#4a4a4a"));
+         scopeCircle.setStrokeWidth(3);
+
+         // Unutrašnji krug
+         Circle innerCircle = new Circle(cx, cy, r - 10);
+         innerCircle.setFill(null);
+         innerCircle.setStroke(Color.web("#666666"));
+         innerCircle.setStrokeWidth(1);
+
+         // Horizontalna linija
+         Line hLine = new Line(cx - r + 15, cy, cx + r - 15, cy);
+         hLine.setStroke(Color.web("#999999"));
+         hLine.setStrokeWidth(1);
+
+         // Vertikalna linija
+         Line vLine = new Line(cx, cy - r + 15, cx, cy + r - 15);
+         vLine.setStroke(Color.web("#999999"));
+         vLine.setStrokeWidth(1);
+
+         // Deblје linije sa stranama (kao reticle)
+         double gap = 40;
+         
+         Line thickL = new Line(cx - r + 15, cy, cx - gap, cy);
+         thickL.setStroke(Color.web("#888888"));
+         thickL.setStrokeWidth(2);
+
+         Line thickR = new Line(cx + gap, cy, cx + r - 15, cy);
+         thickR.setStroke(Color.web("#888888"));
+         thickR.setStrokeWidth(2);
+
+         Line thickT = new Line(cx, cy - r + 15, cx, cy - gap);
+         thickT.setStroke(Color.web("#888888"));
+         thickT.setStrokeWidth(2);
+
+         Line thickB = new Line(cx, cy + gap, cx, cy + r - 15);
+         thickB.setStroke(Color.web("#888888"));
+         thickB.setStrokeWidth(2);
+
+         // Mala crna tačka u centru
+         Circle centerDot = new Circle(cx, cy, 2);
+         centerDot.setFill(Color.web("#333333"));
+
+         // Minimalni markeri za daljinu (100m, 200m)
+         double markerRadius = r - 30;
+         
+         // Marker za 100m (desno)
+         Circle marker100 = new Circle(cx + markerRadius - 20, cy, 1.5);
+         marker100.setFill(Color.web("#555555"));
+         
+         // Marker za 200m (desno)
+         Circle marker200 = new Circle(cx + markerRadius - 40, cy, 1.5);
+         marker200.setFill(Color.web("#555555"));
+
+         group.getChildren().addAll(mask, scopeCircle, innerCircle, hLine, vLine, 
+                                      thickL, thickR, thickT, thickB, centerDot, 
+                                      marker100, marker200);
+         group.setMouseTransparent(true);
+         return group;
+     }
+
+     private Group createDetailedScopeOverlay() {
+         Group group = new Group();
+         double cx = WIDTH / 2;
+         double cy = HEIGHT / 2;
+         double r = Math.min(WIDTH, HEIGHT) / 2.2; // Veći krug za zoom
+
+         // Crna maska oko scope-a
+         Rectangle screenRect = new Rectangle(0, 0, WIDTH, HEIGHT);
+         Circle scopeHole = new Circle(cx, cy, r);
+         Shape mask = Shape.subtract(screenRect, scopeHole);
+         mask.setFill(Color.BLACK);
+
+         // Vanjski krug (scope cijev)
+         Circle scopeCircle = new Circle(cx, cy, r);
+         scopeCircle.setFill(null);
+         scopeCircle.setStroke(Color.web("#333333"));
+         scopeCircle.setStrokeWidth(4);
+
+         // Unutrašnji krug - detaljniji
+         Circle innerCircle = new Circle(cx, cy, r - 8);
+         innerCircle.setFill(null);
+         innerCircle.setStroke(Color.web("#555555"));
+         innerCircle.setStrokeWidth(1);
+
+         // Horizontalna linija (central line)
+         Line hLine = new Line(cx - r + 20, cy, cx + r - 20, cy);
+         hLine.setStroke(Color.web("#888888"));
+         hLine.setStrokeWidth(1);
+
+         // Vertikalna linija (central line)
+         Line vLine = new Line(cx, cy - r + 20, cx, cy + r - 20);
+         vLine.setStroke(Color.web("#888888"));
+         vLine.setStrokeWidth(1);
+
+         // Deblје reticle linije
+         double gap = 50;
+         
+         Line thickL = new Line(cx - r + 20, cy, cx - gap, cy);
+         thickL.setStroke(Color.web("#666666"));
+         thickL.setStrokeWidth(3);
+
+         Line thickR = new Line(cx + gap, cy, cx + r - 20, cy);
+         thickR.setStroke(Color.web("#666666"));
+         thickR.setStrokeWidth(3);
+
+         Line thickT = new Line(cx, cy - r + 20, cx, cy - gap);
+         thickT.setStroke(Color.web("#666666"));
+         thickT.setStrokeWidth(3);
+
+         Line thickB = new Line(cx, cy + gap, cx, cy + r - 20);
+         thickB.setStroke(Color.web("#666666"));
+         thickB.setStrokeWidth(3);
+
+         // Centralna crna tačka
+         Circle centerDot = new Circle(cx, cy, 2.5);
+         centerDot.setFill(Color.web("#222222"));
+
+         // Grid linije (fina mreža)
+         Group gridLines = new Group();
+         int gridSpacing = 40;
+         
+         // Vertikalne grid linije
+         for (int i = (int)(cx - r + 40); i < cx + r - 40; i += gridSpacing) {
+             Line gridLine = new Line(i, cy - r + 30, i, cy + r - 30);
+             gridLine.setStroke(Color.web("#444444"));
+             gridLine.setStrokeWidth(0.5);
+             gridLine.setOpacity(0.3);
+             gridLines.getChildren().add(gridLine);
+         }
+         
+         // Horizontalne grid linije
+         for (int i = (int)(cy - r + 40); i < cy + r - 40; i += gridSpacing) {
+             Line gridLine = new Line(cx - r + 30, i, cx + r - 30, i);
+             gridLine.setStroke(Color.web("#444444"));
+             gridLine.setStrokeWidth(0.5);
+             gridLine.setOpacity(0.3);
+             gridLines.getChildren().add(gridLine);
+         }
+
+         // Markeri za daljinu (distance markers)
+         double markerRadius = r - 40;
+         
+         // Markeri na desnoj strani (100m, 200m, 300m, 400m)
+         createDistanceMarker(group, cx + markerRadius - 15, cy, "100");
+         createDistanceMarker(group, cx + markerRadius - 35, cy, "200");
+         createDistanceMarker(group, cx + markerRadius - 55, cy, "300");
+         createDistanceMarker(group, cx + markerRadius - 75, cy, "400");
+         
+         // Markeri na lijevoj strani (kao mirror)
+         createDistanceMarker(group, cx - markerRadius + 15, cy, "100");
+         createDistanceMarker(group, cx - markerRadius + 35, cy, "200");
+         
+         // Markeri na vrhu i dnu
+         createDistanceMarker(group, cx, cy - markerRadius + 20, "100");
+         createDistanceMarker(group, cx, cy + markerRadius - 20, "100");
+
+         // Wind indicator na vrhu
+         createWindIndicator(group, cx, cy - r + 30);
+
+         // Breathing indicator na dnu
+         Text breathingText = new Text(cx - 20, cy + r - 15, "BREATHING");
+         breathingText.setFont(new Font("Arial", 10));
+         breathingText.setFill(Color.web("#666666"));
+         breathingText.setOpacity(0.6);
+
+         group.getChildren().addAll(mask, scopeCircle, innerCircle, gridLines, 
+                                      hLine, vLine, thickL, thickR, thickT, thickB, 
+                                      centerDot, breathingText);
+         group.setMouseTransparent(true);
+         return group;
+     }
+
+     private void createDistanceMarker(Group group, double x, double y, String distance) {
+         // Mali krugovi kao markeri
+         Circle marker = new Circle(x, y, 2.5);
+         marker.setFill(null);
+         marker.setStroke(Color.web("#555555"));
+         marker.setStrokeWidth(1);
+
+         // Kratke linije uz markere (horizontalno)
+         Line line1 = new Line(x - 8, y, x - 3, y);
+         line1.setStroke(Color.web("#555555"));
+         line1.setStrokeWidth(1);
+         
+         Line line2 = new Line(x + 3, y, x + 8, y);
+         line2.setStroke(Color.web("#555555"));
+         line2.setStrokeWidth(1);
+
+         // Distanca tekst
+         Text distanceLabel = new Text(x + 12, y + 4, distance);
+         distanceLabel.setFont(new Font("Arial", 7));
+         distanceLabel.setFill(Color.web("#555555"));
+         distanceLabel.setOpacity(0.6);
+
+         group.getChildren().addAll(marker, line1, line2, distanceLabel);
+     }
+
+     private void createWindIndicator(Group group, double x, double y) {
+         // Vjetar indikator - linije sa zagradama
+         Text windLabel = new Text(x - 20, y, "WIND:");
+         windLabel.setFont(new Font("Arial", 9));
+         windLabel.setFill(Color.web("#555555"));
+         windLabel.setOpacity(0.6);
+
+         // Tri pozicije za vjetar (lijevo, sredina, desno)
+         Line windL = new Line(x + 15, y - 3, x + 15, y + 3);
+         windL.setStroke(Color.web("#444444"));
+         windL.setStrokeWidth(1);
+
+         Line windM = new Line(x + 25, y - 4, x + 25, y + 4);
+         windM.setStroke(Color.web("#555555"));
+         windM.setStrokeWidth(2);
+
+         Line windR = new Line(x + 35, y - 3, x + 35, y + 3);
+         windR.setStroke(Color.web("#444444"));
+         windR.setStrokeWidth(1);
+
+         group.getChildren().addAll(windLabel, windL, windM, windR);
+     }
 
     private Pane createCustomCrosshair() {
         Pane pane = new Pane();
@@ -452,40 +691,41 @@ public class TargetShooter extends Application {
         pt.play();
     }
 
-    private void fire() {
-        if (fireClip != null) {
-            if (fireClip.isRunning()) {
-                fireClip.stop(); // Stop if already playing
-            }
-            fireClip.setFramePosition(0); // Rewind
-            fireClip.start(); // Play
-        }
-        Group cameraPivot = (Group) camera.getParent();
-        createMuzzleFlash();
+     private void fire() {
+         if (fireClip != null) {
+             if (fireClip.isRunning()) {
+                 fireClip.stop(); // Stop if already playing
+             }
+             fireClip.setFramePosition(0); // Rewind
+             fireClip.start(); // Play
+         }
+         Group cameraPivot = (Group) camera.getParent();
+         createMuzzleFlash();
 
-        // Bullet
-        Sphere bullet = new Sphere(0.5);
-        bullet.setMaterial(new PhongMaterial(Color.BLACK));
+         // Bullet
+         Sphere bullet = new Sphere(0.5);
+         bullet.setMaterial(new PhongMaterial(Color.BLACK));
 
-        Point3D origin = camera.localToScene(0, 0, 0);
-        Point3D target = camera.localToScene(0, 0, 1);
-        Point3D direction = target.subtract(origin).normalize();
+         Point3D origin = camera.localToScene(0, 0, 0);
+         Point3D target = camera.localToScene(0, 0, 1);
+         Point3D direction = target.subtract(origin).normalize();
 
-        bullet.setTranslateX(origin.getX());
-        bullet.setTranslateY(origin.getY());
-        bullet.setTranslateZ(origin.getZ());
-        bullet.setUserData(direction);
-        bullets.add(bullet);
-        root3D.getChildren().add(bullet);
+         bullet.setTranslateX(origin.getX());
+         bullet.setTranslateY(origin.getY());
+         bullet.setTranslateZ(origin.getZ());
+         bullet.setUserData(direction);
+         bullets.add(bullet);
+         root3D.getChildren().add(bullet);
 
-        // Recoil Animation
-        Rotate recoilRotate = new Rotate(-2, Rotate.X_AXIS); // Kickback rotation
-        cameraPivot.getTransforms().add(recoilRotate);
+         // Recoil Animation - jaći ako je zoomed
+         double recoilAmount = isScoped ? 3.0 : 2.0; // Veći recoil pri zoom-u
+         Rotate recoilRotate = new Rotate(-recoilAmount, Rotate.X_AXIS); // Kickback rotation
+         cameraPivot.getTransforms().add(recoilRotate);
 
-        PauseTransition recoilEnd = new PauseTransition(Duration.millis(60));
-        recoilEnd.setOnFinished(e -> cameraPivot.getTransforms().remove(recoilRotate));
-        recoilEnd.play();
-    }
+         PauseTransition recoilEnd = new PauseTransition(Duration.millis(60));
+         recoilEnd.setOnFinished(e -> cameraPivot.getTransforms().remove(recoilRotate));
+         recoilEnd.play();
+     }
 
     private void playHitEffect(Point3D position) {
         List<Sphere> newParticles = new ArrayList<>();
@@ -540,8 +780,40 @@ public class TargetShooter extends Application {
         return targetGroup;
     }
 
-    private void update() {
-        for (Node bullet : new ArrayList<>(bullets)) {
+     private void update() {
+         // Breathing efekt kada je scoped
+         if (isScoped) {
+             if (breathingIn) {
+                 breathingOffset += 0.01;
+                 if (breathingOffset >= 2) {
+                     breathingIn = false;
+                 }
+             } else {
+                 breathingOffset -= 0.01;
+                 if (breathingOffset <= 0) {
+                     breathingIn = true;
+                 }
+             }
+             
+             // Primijeni breathing efekt na scope - mali zoom
+             double breathingScale = 1.0 + (breathingOffset - 1) * 0.02;
+             detailedScopeOverlay.setScaleX(breathingScale);
+             detailedScopeOverlay.setScaleY(breathingScale);
+             
+             // Reset na centar
+             double offsetX = (breathingScale - 1) * (-WIDTH / 2);
+             double offsetY = (breathingScale - 1) * (-HEIGHT / 2);
+             detailedScopeOverlay.setTranslateX(offsetX);
+             detailedScopeOverlay.setTranslateY(offsetY);
+         } else {
+             // Resetuj breathing efekt kada nije zoomed
+             detailedScopeOverlay.setScaleX(1.0);
+             detailedScopeOverlay.setScaleY(1.0);
+             detailedScopeOverlay.setTranslateX(0);
+             detailedScopeOverlay.setTranslateY(0);
+         }
+
+         for (Node bullet : new ArrayList<>(bullets)) {
             Point3D direction = (Point3D) bullet.getUserData();
             Point3D prevPos = new Point3D(bullet.getTranslateX(), bullet.getTranslateY(), bullet.getTranslateZ());
 
