@@ -59,6 +59,8 @@ public class TargetShooter extends Application {
      private boolean isScoped = false;
      private double breathingOffset = 0;
      private boolean breathingIn = true;
+     private double scopeRecoilX = 0;
+     private double scopeRecoilY = 0;
 
     @Override
     public void start(Stage stage) {
@@ -585,9 +587,15 @@ public class TargetShooter extends Application {
          breathingText.setFill(Color.web("#666666"));
          breathingText.setOpacity(0.6);
 
+         // Ready indicator
+         Text readyText = new Text(cx - 15, cy - r + 25, "READY");
+         readyText.setFont(new Font("Arial", 12));
+         readyText.setFill(Color.web("#44dd44"));
+         readyText.setOpacity(0.7);
+
          group.getChildren().addAll(mask, scopeCircle, innerCircle, gridLines, 
                                       hLine, vLine, thickL, thickR, thickT, thickB, 
-                                      centerDot, breathingText);
+                                      centerDot, breathingText, readyText);
          group.setMouseTransparent(true);
          return group;
      }
@@ -722,8 +730,18 @@ public class TargetShooter extends Application {
          Rotate recoilRotate = new Rotate(-recoilAmount, Rotate.X_AXIS); // Kickback rotation
          cameraPivot.getTransforms().add(recoilRotate);
 
+         // Scope recoil vizuelni efekt
+         if (isScoped) {
+             scopeRecoilX = -5;
+             scopeRecoilY = -3;
+         }
+
          PauseTransition recoilEnd = new PauseTransition(Duration.millis(60));
-         recoilEnd.setOnFinished(e -> cameraPivot.getTransforms().remove(recoilRotate));
+         recoilEnd.setOnFinished(e -> {
+             cameraPivot.getTransforms().remove(recoilRotate);
+             scopeRecoilX = 0;
+             scopeRecoilY = 0;
+         });
          recoilEnd.play();
      }
 
@@ -801,16 +819,22 @@ public class TargetShooter extends Application {
              detailedScopeOverlay.setScaleY(breathingScale);
              
              // Reset na centar
-             double offsetX = (breathingScale - 1) * (-WIDTH / 2);
-             double offsetY = (breathingScale - 1) * (-HEIGHT / 2);
+             double offsetX = (breathingScale - 1) * (-WIDTH / 2) + scopeRecoilX;
+             double offsetY = (breathingScale - 1) * (-HEIGHT / 2) + scopeRecoilY;
              detailedScopeOverlay.setTranslateX(offsetX);
              detailedScopeOverlay.setTranslateY(offsetY);
+             
+             // Lagano smanjivanje recoil offset-a
+             scopeRecoilX *= 0.92;
+             scopeRecoilY *= 0.92;
          } else {
              // Resetuj breathing efekt kada nije zoomed
              detailedScopeOverlay.setScaleX(1.0);
              detailedScopeOverlay.setScaleY(1.0);
              detailedScopeOverlay.setTranslateX(0);
              detailedScopeOverlay.setTranslateY(0);
+             scopeRecoilX = 0;
+             scopeRecoilY = 0;
          }
 
          for (Node bullet : new ArrayList<>(bullets)) {
