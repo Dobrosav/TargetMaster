@@ -606,9 +606,16 @@ public class TargetShooter extends Application {
          zoomText.setFill(Color.web("#555555"));
          zoomText.setOpacity(0.5);
 
+         // Stability indicator (sve linije sa stranama menjaće boju na osnovu breathing-a)
+         // Za sada ćemo pokazati "STEADY" kada je breathing stable
+         Text stabilityText = new Text(cx - 30, cy - 10, "STEADY");
+         stabilityText.setFont(new Font("Arial", 14));
+         stabilityText.setFill(Color.web("#44aa44"));
+         stabilityText.setOpacity(0.4); // Lagano vidljivo
+
          group.getChildren().addAll(mask, scopeCircle, innerCircle, gridLines, 
                                       hLine, vLine, thickL, thickR, thickT, thickB, 
-                                      centerDot, breathingText, readyText, ammoCountText, zoomText);
+                                      centerDot, breathingText, readyText, ammoCountText, zoomText, stabilityText);
          group.setMouseTransparent(true);
          return group;
      }
