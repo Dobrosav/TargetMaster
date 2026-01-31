@@ -238,111 +238,119 @@ public class TargetShooter extends Application {
         });
     }
 
-    private Group createSniperModel() {
-        Group sniper = new Group();
-        PhongMaterial blackMetal = new PhongMaterial(Color.web("#1a1a1a"));
-        PhongMaterial gunMetal = new PhongMaterial(Color.web("#555555"));
-        PhongMaterial woodOrPolymer = new PhongMaterial(Color.web("#2e2620")); // Dark textured look
-        PhongMaterial silverMetal = new PhongMaterial(Color.SILVER);
-        Cylinder barrel = new Cylinder(0.25, 35);
-        barrel.setMaterial(gunMetal);
-        barrel.setRotationAxis(Rotate.X_AXIS);
-        barrel.setRotate(90);
-        barrel.setTranslateZ(-15);
-        Cylinder muzzleBrake = new Cylinder(0.4, 3);
-        muzzleBrake.setMaterial(blackMetal);
-        muzzleBrake.setRotationAxis(Rotate.X_AXIS);
-        muzzleBrake.setRotate(90);
-        muzzleBrake.setTranslateZ(-33.5); // End of barrel
-        Box receiver = new Box(1.6, 2.2, 10);
-        receiver.setMaterial(blackMetal);
-        receiver.setTranslateZ(2);
-        Cylinder bolt = new Cylinder(0.15, 2.5);
-        bolt.setMaterial(silverMetal);
-        bolt.setRotationAxis(Rotate.Z_AXIS);
-        bolt.setRotate(70);
-        bolt.setTranslateX(1.2);
-        bolt.setTranslateY(-0.5);
-        bolt.setTranslateZ(0);
-
-        Sphere boltKnob = new Sphere(0.35);
-        boltKnob.setMaterial(blackMetal);
-        boltKnob.setTranslateX(2.2);
-        boltKnob.setTranslateY(0.2);
-        boltKnob.setTranslateZ(0);
-        Box stockBody = new Box(1.3, 3.0, 14);
-        stockBody.setMaterial(woodOrPolymer);
-        stockBody.setTranslateZ(14);
-        stockBody.setTranslateY(1.0);
-        Box grip = new Box(1.2, 4, 2);
-        grip.setMaterial(woodOrPolymer);
-        grip.setRotationAxis(Rotate.X_AXIS);
-        grip.setRotate(15);
-        grip.setTranslateZ(8);
-        grip.setTranslateY(3.5);
-        Box buttPlate = new Box(1.5, 3.2, 1);
-        buttPlate.setMaterial(new PhongMaterial(Color.BLACK));
-        buttPlate.setTranslateZ(21.5);
-        buttPlate.setTranslateY(1.0);
-        Box mount1 = new Box(0.5, 1, 0.5);
-        mount1.setMaterial(blackMetal);
-        mount1.setTranslateY(-1.6);
-        mount1.setTranslateZ(0);
-        Box mount2 = new Box(0.5, 1, 0.5);
-        mount2.setMaterial(blackMetal);
-        mount2.setTranslateY(-1.6);
-        mount2.setTranslateZ(4);
-        Cylinder scopeTube = new Cylinder(0.4, 12);
-        scopeTube.setMaterial(blackMetal);
-        scopeTube.setRotationAxis(Rotate.X_AXIS);
-        scopeTube.setRotate(90);
-        scopeTube.setTranslateY(-2.5);
-        scopeTube.setTranslateZ(2);
-
-        Cylinder scopeFront = new Cylinder(0.65, 2.5);
-        scopeFront.setMaterial(blackMetal);
-        scopeFront.setRotationAxis(Rotate.X_AXIS);
-        scopeFront.setRotate(90);
-        scopeFront.setTranslateY(-2.5);
-        scopeFront.setTranslateZ(-4);
-
-        Cylinder scopeBack = new Cylinder(0.55, 2.5);
-        scopeBack.setMaterial(blackMetal);
-        scopeBack.setRotationAxis(Rotate.X_AXIS);
-        scopeBack.setRotate(90);
-        scopeBack.setTranslateY(-2.5);
-        scopeBack.setTranslateZ(8);
-
-        Cylinder bipodL = new Cylinder(0.15, 8);
-        bipodL.setMaterial(blackMetal);
-        bipodL.setTranslateZ(-12);
-        bipodL.setTranslateX(-1.5);
-        bipodL.setTranslateY(4);
-        bipodL.setRotationAxis(Rotate.Z_AXIS);
-        bipodL.setRotate(25);
-
-        Cylinder bipodR = new Cylinder(0.15, 8);
-        bipodR.setMaterial(blackMetal);
-        bipodR.setTranslateZ(-12);
-        bipodR.setTranslateX(1.5);
-        bipodR.setTranslateY(4);
-        bipodR.setRotationAxis(Rotate.Z_AXIS);
-        bipodR.setRotate(-25);
-
-        // Assemble
-        sniper.getChildren().addAll(
-                barrel, muzzleBrake,
-                receiver,
-                bolt, boltKnob,
-                stockBody, grip, buttPlate,
-                mount1, mount2, scopeTube, scopeFront, scopeBack,
-                bipodL, bipodR
-        );
-
-        sniper.setTranslateZ(12);
-        sniper.setTranslateY(6);
-        return sniper;
-    }
+     private Group createSniperModel() {
+         Group sniper = new Group();
+         PhongMaterial blackMetal = new PhongMaterial(Color.web("#1a1a1a"));
+         PhongMaterial gunMetal = new PhongMaterial(Color.web("#444444"));
+         PhongMaterial darkGray = new PhongMaterial(Color.web("#333333"));
+         PhongMaterial polymerBlack = new PhongMaterial(Color.web("#2a2a2a"));
+         
+         // MAIN BARREL - Dulji, tanji
+         Cylinder barrel = new Cylinder(0.15, 50);
+         barrel.setMaterial(gunMetal);
+         barrel.setRotationAxis(Rotate.X_AXIS);
+         barrel.setRotate(90);
+         barrel.setTranslateZ(-20);
+         
+         // MUZZLE BRAKE - mali sa linijama
+         Cylinder muzzleBrake = new Cylinder(0.25, 4);
+         muzzleBrake.setMaterial(darkGray);
+         muzzleBrake.setRotationAxis(Rotate.X_AXIS);
+         muzzleBrake.setRotate(90);
+         muzzleBrake.setTranslateZ(-44);
+         
+         // RECEIVER - manji
+         Box receiver = new Box(0.8, 1.5, 8);
+         receiver.setMaterial(blackMetal);
+         receiver.setTranslateZ(0);
+         
+         // BOLT HANDLE
+         Cylinder boltHandle = new Cylinder(0.08, 3);
+         boltHandle.setMaterial(gunMetal);
+         boltHandle.setRotationAxis(Rotate.Z_AXIS);
+         boltHandle.setRotate(45);
+         boltHandle.setTranslateX(0.8);
+         boltHandle.setTranslateY(-0.4);
+         boltHandle.setTranslateZ(-2);
+         
+         // STOCK - manji, jednostavniji
+         Box stock = new Box(0.9, 1.5, 12);
+         stock.setMaterial(polymerBlack);
+         stock.setTranslateZ(10);
+         
+         // GRIP
+         Box grip = new Box(0.7, 2.5, 1.5);
+         grip.setMaterial(polymerBlack);
+         grip.setRotationAxis(Rotate.X_AXIS);
+         grip.setRotate(12);
+         grip.setTranslateZ(4);
+         grip.setTranslateY(2);
+         
+         // CHEEK REST
+         Box cheekRest = new Box(0.8, 0.6, 3);
+         cheekRest.setMaterial(polymerBlack);
+         cheekRest.setTranslateZ(8);
+         cheekRest.setTranslateY(-1.2);
+         
+         // SCOPE RAIL
+         Box scopeRail = new Box(0.3, 0.3, 8);
+         scopeRail.setMaterial(darkGray);
+         scopeRail.setTranslateY(-1.2);
+         scopeRail.setTranslateZ(2);
+         
+         // SCOPE - manji, minimalistički
+         Cylinder scopeTube = new Cylinder(0.35, 10);
+         scopeTube.setMaterial(blackMetal);
+         scopeTube.setRotationAxis(Rotate.X_AXIS);
+         scopeTube.setRotate(90);
+         scopeTube.setTranslateY(-1.8);
+         scopeTube.setTranslateZ(2);
+         
+         Cylinder scopeFront = new Cylinder(0.5, 2);
+         scopeFront.setMaterial(darkGray);
+         scopeFront.setRotationAxis(Rotate.X_AXIS);
+         scopeFront.setRotate(90);
+         scopeFront.setTranslateY(-1.8);
+         scopeFront.setTranslateZ(-3);
+         
+         Cylinder scopeBack = new Cylinder(0.45, 2);
+         scopeBack.setMaterial(darkGray);
+         scopeBack.setRotationAxis(Rotate.X_AXIS);
+         scopeBack.setRotate(90);
+         scopeBack.setTranslateY(-1.8);
+         scopeBack.setTranslateZ(6);
+         
+         // BIPOD - minimalist
+         Cylinder bipodL = new Cylinder(0.1, 5);
+         bipodL.setMaterial(darkGray);
+         bipodL.setTranslateZ(-8);
+         bipodL.setTranslateX(-0.9);
+         bipodL.setTranslateY(2);
+         bipodL.setRotationAxis(Rotate.Z_AXIS);
+         bipodL.setRotate(30);
+         
+         Cylinder bipodR = new Cylinder(0.1, 5);
+         bipodR.setMaterial(darkGray);
+         bipodR.setTranslateZ(-8);
+         bipodR.setTranslateX(0.9);
+         bipodR.setTranslateY(2);
+         bipodR.setRotationAxis(Rotate.Z_AXIS);
+         bipodR.setRotate(-30);
+         
+         // Assemble
+         sniper.getChildren().addAll(
+                 barrel, muzzleBrake,
+                 receiver,
+                 boltHandle,
+                 stock, grip, cheekRest,
+                 scopeRail, scopeTube, scopeFront, scopeBack,
+                 bipodL, bipodR
+         );
+         
+         sniper.setTranslateZ(10);
+         sniper.setTranslateY(4);
+         return sniper;
+     }
 
      private void toggleScope() {
          isScoped = !isScoped;
