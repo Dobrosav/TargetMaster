@@ -244,6 +244,7 @@ public class TargetShooter extends Application {
          PhongMaterial gunMetal = new PhongMaterial(Color.web("#444444"));
          PhongMaterial darkGray = new PhongMaterial(Color.web("#333333"));
          PhongMaterial polymerBlack = new PhongMaterial(Color.web("#2a2a2a"));
+         PhongMaterial steelGray = new PhongMaterial(Color.web("#505050"));
          
          // MAIN BARREL - Dulji, tanji
          Cylinder barrel = new Cylinder(0.15, 50);
@@ -259,10 +260,30 @@ public class TargetShooter extends Application {
          muzzleBrake.setRotate(90);
          muzzleBrake.setTranslateZ(-44);
          
+         // GAS TUBE - mali cylinder ispod cijevi
+         Cylinder gasTube = new Cylinder(0.08, 45);
+         gasTube.setMaterial(steelGray);
+         gasTube.setRotationAxis(Rotate.X_AXIS);
+         gasTube.setRotate(90);
+         gasTube.setTranslateZ(-20);
+         gasTube.setTranslateY(0.25);
+         
          // RECEIVER - manji
          Box receiver = new Box(0.8, 1.5, 8);
          receiver.setMaterial(blackMetal);
          receiver.setTranslateZ(0);
+         
+         // MAGAZINE - ispod receivera
+         Box magazine = new Box(0.5, 0.8, 3);
+         magazine.setMaterial(blackMetal);
+         magazine.setTranslateZ(-1);
+         magazine.setTranslateY(1.1);
+         
+         // TRIGGER GUARD
+         Box triggerGuard = new Box(0.5, 0.8, 2.5);
+         triggerGuard.setMaterial(darkGray);
+         triggerGuard.setTranslateZ(1);
+         triggerGuard.setTranslateY(0.8);
          
          // BOLT HANDLE
          Cylinder boltHandle = new Cylinder(0.08, 3);
@@ -273,10 +294,30 @@ public class TargetShooter extends Application {
          boltHandle.setTranslateY(-0.4);
          boltHandle.setTranslateZ(-2);
          
+         // SAFETY LEVER - mali detaljčić
+         Box safetyLever = new Box(0.15, 0.4, 0.6);
+         safetyLever.setMaterial(steelGray);
+         safetyLever.setTranslateX(-0.5);
+         safetyLever.setTranslateY(0.3);
+         safetyLever.setTranslateZ(-3);
+         
          // STOCK - manji, jednostavniji
          Box stock = new Box(0.9, 1.5, 12);
          stock.setMaterial(polymerBlack);
          stock.setTranslateZ(10);
+         
+         // STOCK VENTILATION LINES - vizuelni detalj
+         Box ventLeft = new Box(0.2, 1.4, 8);
+         ventLeft.setMaterial(darkGray);
+         ventLeft.setTranslateZ(8);
+         ventLeft.setTranslateX(-0.35);
+         ventLeft.setTranslateY(0.8);
+         
+         Box ventRight = new Box(0.2, 1.4, 8);
+         ventRight.setMaterial(darkGray);
+         ventRight.setTranslateZ(8);
+         ventRight.setTranslateX(0.35);
+         ventRight.setTranslateY(0.8);
          
          // GRIP
          Box grip = new Box(0.7, 2.5, 1.5);
@@ -306,6 +347,14 @@ public class TargetShooter extends Application {
          scopeTube.setTranslateY(-1.8);
          scopeTube.setTranslateZ(2);
          
+         // SCOPE EYEPIECE - detalj
+         Cylinder scopeEye = new Cylinder(0.42, 1.5);
+         scopeEye.setMaterial(darkGray);
+         scopeEye.setRotationAxis(Rotate.X_AXIS);
+         scopeEye.setRotate(90);
+         scopeEye.setTranslateY(-1.8);
+         scopeEye.setTranslateZ(8);
+         
          Cylinder scopeFront = new Cylinder(0.5, 2);
          scopeFront.setMaterial(darkGray);
          scopeFront.setRotationAxis(Rotate.X_AXIS);
@@ -319,6 +368,19 @@ public class TargetShooter extends Application {
          scopeBack.setRotate(90);
          scopeBack.setTranslateY(-1.8);
          scopeBack.setTranslateZ(6);
+         
+         // SCOPE RINGS - male kutije za montažu
+         Box scopeRingL = new Box(0.25, 0.4, 1);
+         scopeRingL.setMaterial(steelGray);
+         scopeRingL.setTranslateX(-0.5);
+         scopeRingL.setTranslateY(-1.6);
+         scopeRingL.setTranslateZ(0);
+         
+         Box scopeRingR = new Box(0.25, 0.4, 1);
+         scopeRingR.setMaterial(steelGray);
+         scopeRingR.setTranslateX(0.5);
+         scopeRingR.setTranslateY(-1.6);
+         scopeRingR.setTranslateZ(0);
          
          // BIPOD - minimalist
          Cylinder bipodL = new Cylinder(0.1, 5);
@@ -337,14 +399,20 @@ public class TargetShooter extends Application {
          bipodR.setRotationAxis(Rotate.Z_AXIS);
          bipodR.setRotate(-30);
          
+         // REAR SIGHT - mali detaljčić
+         Box rearSight = new Box(0.15, 0.6, 0.4);
+         rearSight.setMaterial(steelGray);
+         rearSight.setTranslateZ(4);
+         rearSight.setTranslateY(-0.85);
+         
          // Assemble
          sniper.getChildren().addAll(
-                 barrel, muzzleBrake,
-                 receiver,
-                 boltHandle,
-                 stock, grip, cheekRest,
-                 scopeRail, scopeTube, scopeFront, scopeBack,
-                 bipodL, bipodR
+                 barrel, gasTube, muzzleBrake,
+                 receiver, magazine, triggerGuard,
+                 boltHandle, safetyLever,
+                 stock, ventLeft, ventRight, grip, cheekRest,
+                 scopeRail, scopeTube, scopeEye, scopeFront, scopeBack, scopeRingL, scopeRingR,
+                 bipodL, bipodR, rearSight
          );
          
          sniper.setTranslateZ(10);
